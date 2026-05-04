@@ -56,9 +56,8 @@ jobs:
 #once image is pushed to the acr, docker has done its part, to run the image now we use azure cli command to update the container app with the new image.
 #its equivalent of running the image, we may need to specify the resource group so that azure will use that resource group  
       - name: Deploy to Azure Container Apps
-        run: az containerapp update --name ${{ env.CONTAINER_APP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --image ${{secrets.ACR_NAME}}.azurecr.io/backend:latest
-
-
+        run: az containerapp create --name ${{ env.CONTAINER_APP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --image ${{secrets.ACR_NAME}}.azurecr.io/backend:latest -- environment ${{ secrets.CONTAINER_APP_ENVIRONMENT }} --target-port 8000
+        
 
    
     
