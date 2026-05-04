@@ -54,7 +54,7 @@ jobs:
         run: |
           az extension add --name containerapp --upgrade --allow-preview true
           
-          # Check if container app exists
+          # Check if container app exists now
           if az containerapp show -n ${{ env.CONTAINER_APP_NAME }} -g ${{ secrets.AZURE_RESOURCE_GROUP }} &>/dev/null; then
             # Update existing container app
             az containerapp update \

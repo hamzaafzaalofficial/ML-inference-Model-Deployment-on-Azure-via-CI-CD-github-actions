@@ -47,7 +47,7 @@ jobs:
 # -f is telling to use this file for build,  backend is telling that  and to look for in the backend directory
 #In this case, the azure is tagged as latest.
 
-      - name: Build Backend Docker Image
+      - name: Build Backend Docker Images
         run: docker build -t ${{secrets.ACR_NAME}}.azurecr.io/backend:latest -f backend/Dockerfile backend
 
       - name: Push Backend Docker Image to ACR
