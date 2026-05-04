@@ -1,0 +1,78 @@
+name: Deploy Frontend to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  AZURE_CONTAINER_REGISTRY: ${{ secrets.ACR_NAME }}
+  CONTAINER_APP_NAME: sentiment-frontend
+  RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+  IMAGE_NAME: sentiment-frontend
+  API_BASE_URL: https://sentiment-backend.redwave-90d5a156.centralindia.azurecontainerapps.io
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          az extension add --name containerapp --upgrade --allow-preview true
+          
+          # Check if container app exists
+          if az containerapp show -n ${{ env.CONTAINER_APP_NAME }} -g ${{ secrets.AZURE_RESOURCE_GROUP }} &>/dev/null; then
+            # Update existing container app
+            az containerapp update \
+              --name ${{ env.CONTAINER_APP_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+              --set-env-vars API_BASE_URL=${{ env.API_BASE_URL }}
+          else
+            # Create new container app
+            az containerapp create \
+              --name ${{ env.CONTAINER_APP_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --environment ${{ secrets.CONTAINER_APP_ENVIRONMENT }} \
+              --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+              --target-port 8501 \
+              --ingress external \
+              --registry-server ${{ secrets.ACR_NAME }}.azurecr.io \
+              --registry-username ${{ secrets.ACR_USERNAME }} \
+              --registry-password ${{ secrets.ACR_PASSWORD }} \
+              --env-vars API_BASE_URL=${{ env.API_BASE_URL }}
+          fi
