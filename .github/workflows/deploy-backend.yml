@@ -43,11 +43,11 @@ jobs:
 
 #build docker image by passing the registry name, 
 #whenever external registry is used, the image name should be in the format of registryname.azurecr.io/imagename:tag 
-# -f file path to the dockerfile. and to look for in the current directory
+# -f is telling to use this file for build,  backend is telling that  and to look for in the backend directory
 #In this case, the azure is tagged as latest.
 
       - name: Build Backend Docker Image
-        run: docker build -t ${{secrets.ACR_NAME}}.azurecr.io/backend:latest -f backend/Dockerfile .
+        run: docker build -t ${{secrets.ACR_NAME}}.azurecr.io/backend:latest -f backend/Dockerfile backend
 
       - name: Push Backend Docker Image to ACR
         run: docker push ${{secrets.ACR_NAME}}.azurecr.io/backend:latest
