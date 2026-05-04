@@ -18,6 +18,7 @@ on:
 #In this case, it is used to store the name of the container app for easier maintenance. 
 #Dont store sensitive information such as credentials in environment variables, use GitHub Secrets instead.
 #This allows for easier maintenance and updates, as you only need to change the value in one place if the container app name changes.
+#test
 
 env:
   CONTAINER_APP_NAME: sentiment-backend
